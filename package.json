@@ -1,15 +1,24 @@
 {
   "name": "market-indicator",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "api/index.js",
   "scripts": {
-    "dev": "concurrently \"cd server && npm start\" \"cd client && npm run dev\""
+    "start": "node api/index.js",
+    "dev": "concurrently \"npm start\" \"cd client && npm run dev\"",
+    "build": "cd client && npm install && npm run build"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "cookie-session": "^2.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "kiteconnect": "^5.1.0"
+  },
+  "devDependencies": {
     "concurrently": "^9.2.1"
   }
 }

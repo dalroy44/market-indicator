@@ -1,22 +1,21 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const session = require('express-session');
+const cookieSession = require('cookie-session');
 var KiteConnect = require("kiteconnect").KiteConnect;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({
-    origin: 'http://localhost:5173', // Vite default port
+    origin: ['http://localhost:5173', 'https://your-vercel-app-url.vercel.app'], // Update this after deployment
     credentials: true
 }));
 app.use(express.json());
-app.use(session({
-    secret: 'market-indicator-secret',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false } // Set to true if using HTTPS
+app.use(cookieSession({
+    name: 'session',
+    keys: ['market-indicator-secret'],
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
 
 const apiKey = process.env.KITE_API_KEY;
@@ -42,8 +41,7 @@ app.get('/callback', (req, res) => {
         .then((response) => {
             console.log("Session generated");
             req.session.accessToken = response.access_token;
-            // Optionally persist this token or session
-            res.redirect('http://localhost:5173/'); 
+            res.redirect('http://localhost:5173/'); // Make this dynamic for prod
         })
         .catch((err) => {
             console.error("Login failed", err);
@@ -60,14 +58,11 @@ app.get('/api/dashboard-data', async (req, res) => {
     kite.setAccessToken(req.session.accessToken);
 
     try {
-        // Fetch Holdings and Nifty Quote
-        // keeping getQuote for detail
         const [holdings, quotes] = await Promise.all([
             kite.getHoldings(),
             kite.getQuote(["NSE:NIFTY 50"])
         ]);
 
-        // Calculate Portfolio Day P&L
         let totalDayPnL = 0;
         if (holdings) {
             totalDayPnL = holdings.reduce((sum, h) => {
@@ -77,9 +72,6 @@ app.get('/api/dashboard-data', async (req, res) => {
         }
 
         const niftyQuote = quotes["NSE:NIFTY 50"];
-        const niftyChange = niftyQuote.net_change; // or whatever field provides change
-        // Checking Kite Docs locally if I could... but assuming net_change or calculating it.
-        // Quote usually has `last_price` and `ohlc.close`. 
         const niftyChangePercent = ((niftyQuote.last_price - niftyQuote.ohlc.close) / niftyQuote.ohlc.close) * 100;
 
         res.json({
@@ -96,7 +88,6 @@ app.get('/api/dashboard-data', async (req, res) => {
 
     } catch (err) {
         console.error("Data fetch error", err);
-        // Handle session expiry
         if (err.status === 403) {
              return res.status(401).json({ error: "Session expired" });
         }
@@ -104,6 +95,12 @@ app.get('/api/dashboard-data', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+// Only listen if not running in Vercel (local dev)
+if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+// Export for Vercel
+module.exports = app;
