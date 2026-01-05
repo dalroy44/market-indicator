@@ -8,7 +8,7 @@ function App() {
 
   const fetchData = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/dashboard-data');
+      const res = await fetch('/api/dashboard-data');
       if (res.status === 401) {
         setIsAuthenticated(false);
         setLoading(false);
@@ -46,7 +46,7 @@ function App() {
         <div className="text-center">
             <h1 className="text-3xl font-bold text-white mb-8">Market Indicator</h1>
             <a 
-                href="http://localhost:3000/login" 
+                href="/login" 
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-lg transition-colors shadow-lg"
             >
                 Connect to Kite
