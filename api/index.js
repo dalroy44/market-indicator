@@ -41,7 +41,7 @@ app.get('/callback', (req, res) => {
         .then((response) => {
             console.log("Session generated");
             req.session.accessToken = response.access_token;
-            res.redirect('http://localhost:5173/'); // Make this dynamic for prod
+            res.redirect('/'); 
         })
         .catch((err) => {
             console.error("Login failed", err);
